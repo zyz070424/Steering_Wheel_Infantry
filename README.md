@@ -1,6 +1,6 @@
-# 双板舵轮步兵考核工程
+# 舵轮步兵考核工程
 
-本仓库用于 STM32H723VET6 双板舵轮步兵考核。系统由一块云台板、一块底盘板和一份 Common 通信契约组成：
+本仓库用于 STM32H723VET6 舵轮步兵考核。系统由一块云台板、一块底盘板和一份 Common 通信契约组成：
 
 ```text
 Final_Assessment/
@@ -9,7 +9,7 @@ Final_Assessment/
 └─ Common/             两板共同编译的宏和 CAN2 业务帧
 ```
 
-两块板可以单独编译、独立烧录；它们不共享全局对象，也没有“上帝类”。跨板信息只能经过 CAN2 的 `InterboardFrame`。
+两块板可以单独编译、独立烧录。跨板信息只能经过 CAN2 的 `InterboardFrame`。
 
 ## 1. 考核功能概览
 
@@ -307,43 +307,12 @@ cmake --build build/Debug
 
 当前两工程均已使用 STM32 工具链完成编译。请使用各工程原本的 Cube/CMake 配置，不要把两个工程合并为一个工程。
 
-## 10. 上板检查顺序
+## 10参考代码
 
-建议按以下顺序排查，避免一次打开全部功能：
+BSP层与Device层主要参考岳麓框架
 
-1. 两板分别烧录，确认 `App_Config_Init()` 和 1 ms 控制任务已接入；
-2. 查看 CAN1/CAN2/CAN3 是否启动，确认电机反馈 CAN ID 正确；
-3. 单独使能四个转向 GM6020，填好 `steer_zero_offset_deg[]`；
-4. 检查静止时是否为 X 锁轮；
-5. 检查四个 M3508 速度环方向和舵轮平移；
-6. 检查 CAN2 的 `0x301`、`0x302` 帧，以及两板 gimbal yaw 是否一致；
-7. 再测试底盘跟随和小陀螺；
-8. 单独测试摩擦轮、单发、连发、堵转回退；
-9. 最后接入 USB CDC 视觉，先观察姿态回传，再置 `GIMBAL_VISION` 检查目标跟随。
+APP层参考了中科大
 
-## 11. 当前边界
+Algorithm里面的 Matrix搬运的是https://github.com/PX4/PX4-Matrix.git Middlewares/Third_Party/PX4-Matrix（虽然没有用上）
 
-本项目面向框架考核，以下内容刻意不作为当前基础框架的一部分：
-
-- 视觉弹道补偿、预测和丢帧超时策略；
-- 云台和底盘的软限位、故障保护、离线保护；
-- 由遥控器直接触发 `GIMBAL_VISION` 的固定按键映射；
-- `CHASSIS_NORMAL` 的固定 DT7 键位；
-- 实机 PID、IMU 坐标变换、机械零位与轮距标定。
-
-这些不影响本次框架的层级、通信、预编译切换和主要控制流程；应在基础通信与电机方向验证通过后按实机逐项加入。
-
-## 12. 关键文件索引
-
-| 文件                                                                  | 说明                    |
-| ------------------------------------------------------------------- | --------------------- |
-| `Common/robot_config.h`                                             | DR16 和拨弹盘安装位置预编译开关    |
-| `Common/interboard_frame.h`                                         | 两板 CAN2 业务帧契约         |
-| `Gimbal/Gimbal/user_file/3_Application/GIMBAL/app_gimbal.*`         | 云台位置控制、视觉跟随           |
-| `Gimbal/Gimbal/user_file/3_Application/SHOOT/app_shoot.*`           | 摩擦轮控制                 |
-| `Gimbal/Gimbal/user_file/3_Application/FEED_ROTOR/app_feed_rotor.*` | 上供弹拨弹与回退              |
-| `Gimbal/Gimbal/user_file/3_Application/CMD/app_cmd.*`               | 云台板命令生成和 CAN2 同步      |
-| `Gimbal/Gimbal/user_file/2_Device/VISION/dvc_vision.*`              | USB CDC 视觉协议          |
-| `Chassis/Chassis/user_file/3_Application/CHASSIS/app_chassis.*`     | 舵轮逆解、跟随 PID、X 锁轮、零位补偿 |
-| `Chassis/Chassis/user_file/3_Application/CMD/app_cmd.*`             | 底盘板命令消费/生成和 CAN2 同步   |
-| `Chassis/Chassis/user_file/3_Application/CONFIG/app_config.cpp`     | CAN 电机实例与四个转向零位配置     |
+Algorithm里面的四元数解算和卡尔曼滤波参考的是https://github.com/WangHongxi2001/RoboMaster-C-Board-INS-Example

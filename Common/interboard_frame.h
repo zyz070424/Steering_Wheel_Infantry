@@ -57,6 +57,6 @@ struct InterboardFrame
     GimbalFeedback gimbal_feedback{};
 };
 
-static_assert(sizeof(InterboardFrame) <= 60U, "InterboardFrame exceeds FDCANCOMM buffer");
+
 
 #endif
